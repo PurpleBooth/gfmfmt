@@ -29,3 +29,13 @@ USAGE:
 ARGS:
   <markdown-files>...    Markdown files or folders containing markdown
 ```
+
+## Installing
+
+Download [gfmfmt](https://github.com/PurpleBooth/gfmfmt/releases/latest) from the release page
+
+Alternatively use homebrew
+
+```shell
+brew install PurpleBooth/repo/gfmfmt
+```
