@@ -32,10 +32,11 @@ ARGS:
 
 ## Installing
 
-Download [gfmfmt](https://github.com/PurpleBooth/gfmfmt/releases/latest) from the release page
+Download [gfmfmt](https://github.com/PurpleBooth/gfmfmt/releases/latest)
+from the release page
 
 Alternatively use homebrew
 
-```shell
+``` shell
 brew install PurpleBooth/repo/gfmfmt
 ```
