@@ -108,6 +108,7 @@ jobs:
       id: create_release
       uses: ncipollo/release-action@v1.8.6
       with:
+        artifacts: "gfmfmt"
         allowUpdates: true
         token: ${{ secrets.GITHUB_TOKEN }}
         body: ${{ steps.changelog.outputs.body }}
