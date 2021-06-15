@@ -1,0 +1,21 @@
+class Gfmfmt < Formula
+  desc "Format GitHub flavour markdown"
+  homepage "https://github.com/{{ github_repo }}"
+  url "https://github.com/{{ github_repo }}/archive/{{ git_tag }}.tar.gz"
+  sha256 "{{ file_sha }}"
+  depends_on "bash"
+  depends_on "pandoc"
+
+  def install
+    bin.install "gfmfmt"
+  end
+
+  test do
+    (testpath/"Test.md").write <<-EOS.undent
+      Hello World
+      ===========
+    EOS
+
+        assert_equal (testpath/"Test.md").read, "# Hello World"
+  end
+end

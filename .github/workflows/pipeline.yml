@@ -1,0 +1,192 @@
+name: Pipeline
+on:
+  push:
+    branches:
+    - '*'
+  pull_request:
+jobs:
+  lint:
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2.3.4
+    - uses: luizm/action-sh-checker@v0.3.0
+      env:
+        SHFMT_OPTS: -s
+      with:
+        sh_checker_comment: true
+
+  lint-markdown:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: PurpleBooth/gfmfmt-action@v1.0.3
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2.3.4
+    - uses: mig4/setup-bats@v1
+    - run: sudo apt-get install pandoc
+    - run: make test
+
+  versio-plan:
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GITHUB_USER: ${{ github.actor }}
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2.3.4
+      with:
+        fetch-depth: 0
+    - uses: chaaz/versio-actions/install@v1.1
+    - run: versio check
+    - run: versio plan
+    - run: versio release --dry-run
+
+  release:
+    if: github.ref == 'refs/heads/main'
+    needs:
+    - lint
+    - test
+    - versio-plan
+    - lint-markdown
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GITHUB_USER: ${{ github.actor }}
+    outputs:
+      version_bump: ${{ steps.version_bump.outputs.version_bump }}
+      current_version: ${{ steps.current_version.outputs.current_version }}
+      previous_version: ${{ steps.previous_version.outputs.previous_version }}
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2.3.4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0
+    - uses: chaaz/versio-actions/install@v1.1
+      name: Install versio
+    - id: previous_version
+      run: echo ::set-output "name=previous_version::$( versio get --id 1 -v )"
+    - run: echo ::set-output "name=BUMP::$( versio release --dry-run )"
+      id: get_versio_plan
+    - name: Generate release
+      if: ${{ contains(steps.get_versio_plan.outputs.BUMP, ' -> ') }}
+      run: versio release
+    - run: echo ::set-output "name=current_version::$( versio get --id 1 -v )"
+      id: current_version
+    - run: echo ::set-output "name=version_bump::true"
+      if: steps.current_version.outputs.current_version != steps.previous_version.outputs.previous_version
+      id: version_bump
+
+  upload-release:
+    if: needs.release.outputs.version_bump
+    needs:
+    - release
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2.3.4
+      name: Checkout the repository
+      with:
+        lfs: true
+        fetch-depth: 0
+        ref: v${{ needs.release.outputs.current_version }}
+    - id: get_repository_name
+      name: Calculate repository name
+      run: echo ::set-output name=REPOSITORY_NAME::$(echo "$GITHUB_REPOSITORY" | awk
+        -F / '{print $2}' | sed -e "s/:refs//")
+      shell: bash
+    - uses: dlavrenuek/conventional-changelog-action@v1.1.2
+      id: changelog
+      with:
+        from: v${{ needs.release.outputs.previous_version }}
+        to: v${{ needs.release.outputs.current_version }}
+    - env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      id: create_release
+      uses: ncipollo/release-action@v1.8.6
+      with:
+        allowUpdates: true
+        token: ${{ secrets.GITHUB_TOKEN }}
+        body: ${{ steps.changelog.outputs.body }}
+        name: Release v${{ needs.release.outputs.current_version }}
+        tag: v${{ needs.release.outputs.current_version }}
+
+  generate-formula:
+    if: needs.release.outputs.version_bump
+    needs:
+      - release
+    name: Generate Homebrew Formula
+    runs-on: ubuntu-latest
+    steps:
+      - id: get_repository_name
+        name: Work out repository name
+        run:
+          echo ::set-output "name=REPOSITORY_NAME::$(echo "$GITHUB_REPOSITORY" |
+          awk -F / '{print $2}' | sed -e "s/:refs//")"
+        shell: bash
+      - uses: actions/checkout@v2.3.4
+        name: Checkout this repository
+        with:
+          path: main-repo
+          ref: v${{ needs.release.outputs.current_version }}
+      - name: Import GPG key
+        uses: crazy-max/ghaction-import-gpg@v3.1.0
+        with:
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+          git-user-signingkey: true
+          git-commit-gpgsign: true
+          git-tag-gpgsign: true
+          workdir: main-repo
+      - uses: actions/checkout@v2.3.4
+        with:
+          repository: PurpleBooth/homebrew-repo
+          token: ${{ secrets.COMMITTER_TOKEN }}
+          path: homebrew-repo
+          ref: main
+        name: Checkout the custom tap
+      - name: Import GPG key
+        uses: crazy-max/ghaction-import-gpg@v3.1.0
+        with:
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+          git-user-signingkey: true
+          git-commit-gpgsign: true
+          git-tag-gpgsign: true
+          workdir: homebrew-repo
+      - run: |
+          curl -Lo file.tar.gz "https://github.com/$GIT_REPO/archive/$GIT_TAG.tar.gz"
+          sha256sum -b file.tar.gz | awk '{ print $1 }' > hash
+          echo ::set-output "name=SHA256::$( cat hash )"
+        id: hash
+        shell: bash
+        env:
+          GIT_REPO: ${{ github.repository }}
+          GIT_TAG: v${{ needs.release.outputs.current_version }}
+        name: Calculate the binary hash
+      - uses: cuchi/jinja2-action@v1.2.0
+        with:
+          template: main-repo/homebrew/formula.rb.j2
+          output_file: formula.rb
+          variables: |
+            github_repo=${{ github.repository }}
+            git_tag=v${{ needs.release.outputs.current_version }}
+            file_sha=${{ steps.hash.outputs.SHA256 }}
+        name: Generate the template
+      - shell: bash
+        name: Open a PR on the custom tap repository
+        run: |
+          VERSION="$(echo $GIT_TAG | sed 's/^refs\/tags\///')"
+          git -C homebrew-repo switch -c "$REPOSITORY_NAME-$VERSION"
+          cp formula.rb "homebrew-repo/Formula/$REPOSITORY_NAME.rb"
+          git -C homebrew-repo add "Formula/$REPOSITORY_NAME.rb"
+          git -C homebrew-repo commit -m "fix: Update $REPOSITORY_NAME to $VERSION"
+          git -C homebrew-repo push origin "$REPOSITORY_NAME-$VERSION"
+          (cd homebrew-repo && gh pr create --label releases --base main --fill)
+        env:
+          REPOSITORY_NAME: ${{ steps.get_repository_name.outputs.REPOSITORY_NAME }}
+          GIT_TAG: v${{ needs.release.outputs.current_version }}
+          GITHUB_TOKEN: ${{ secrets.COMMITTER_TOKEN }}

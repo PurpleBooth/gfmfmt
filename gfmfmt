@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+function gfmfmtfile() {
+  TEMPORARY_FILE="$(mktemp -d)/$(basename "$1")"
+  pandoc --from=gfm --to=gfm --wrap=auto "$1" >"$TEMPORARY_FILE"
+  mv "$TEMPORARY_FILE" "$1"
+}
+
+if [ $# -eq 0 ]; then
+  cat <<EOC
+gfmfmt
+Billie Thompson <billie+gfmfmt@billiecodes.com>
+Format GitHub flavour markdown
+
+USAGE:
+  gfmfmt <markdown-files>...
+
+ARGS:
+  <markdown-files>...    Markdown files or folders containing markdown
+EOC
+  exit 0
+fi
+
+for I in "$@"; do
+  find $I -type f | while read -r file; do gfmfmtfile "$file"; done
+done
