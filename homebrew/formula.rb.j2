@@ -1,7 +1,7 @@
 class Gfmfmt < Formula
   desc "Format GitHub flavour markdown"
   homepage "https://github.com/{{ github_repo }}"
-  url "https://github.com/{{ github_repo }}/archive/{{ git_tag }}.tar.gz"
+  url "https://github.com/{{ github_repo }}/archive/refs/tags/{{ git_tag }}.tar.gz"
   sha256 "{{ file_sha }}"
   depends_on "bash"
   depends_on "pandoc"
