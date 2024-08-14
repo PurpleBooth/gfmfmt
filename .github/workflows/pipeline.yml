@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-    - uses: luizm/action-sh-checker@v0.3.0
+    - uses: luizm/action-sh-checker@7f44869033b40ee4ffe7dc76c87a1bc66e3d025a # v0.3.0
       env:
         SHFMT_OPTS: -s
       with:
@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-    - uses: mig4/setup-bats@v1
+    - uses: mig4/setup-bats@af9a00deb21b5d795cabfeaa8d9060410377686d # v1
     - run: sudo apt-get install pandoc
     - run: make test
 
@@ -88,7 +88,7 @@ jobs:
       run: echo ::set-output name=REPOSITORY_NAME::$(echo "$GITHUB_REPOSITORY" | awk
         -F / '{print $2}' | sed -e "s/:refs//")
       shell: bash
-    - uses: dlavrenuek/conventional-changelog-action@v1.1.2
+    - uses: dlavrenuek/conventional-changelog-action@b3c3c89be84f31d993b876697f643d0266874f5d # v1.1.2
       id: changelog
       with:
         from: v${{ needs.release.outputs.previous_version }}
@@ -124,7 +124,7 @@ jobs:
           path: main-repo
           ref: v${{ needs.release.outputs.current_version }}
       - name: Import GPG key
-        uses: crazy-max/ghaction-import-gpg@v3.1.0
+        uses: crazy-max/ghaction-import-gpg@b0793c0060c97f4ef0efbac949d476c6499b7775 # v3.1.0
         with:
           gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.GPG_PASSPHRASE }}
@@ -140,7 +140,7 @@ jobs:
           ref: main
         name: Checkout the custom tap
       - name: Import GPG key
-        uses: crazy-max/ghaction-import-gpg@v3.1.0
+        uses: crazy-max/ghaction-import-gpg@b0793c0060c97f4ef0efbac949d476c6499b7775 # v3.1.0
         with:
           gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.GPG_PASSPHRASE }}
