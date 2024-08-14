@@ -24,5 +24,5 @@ EOC
 fi
 
 for I in "$@"; do
-  find $I -type f | while read -r file; do gfmfmtfile "$file"; done
+  find "$I" -type f | while read -r file; do gfmfmtfile "$file"; done
 done
