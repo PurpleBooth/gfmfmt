@@ -2,6 +2,15 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v1.0.1 - 2024-08-14
+#### Bug Fixes
+- Prevent accidental splitting - (cc8a4f1) - Billie Thompson
+#### Miscellaneous Chores
+- **(deps)** update dlavrenuek/conventional-changelog-action action to v1.2.5 - (1a38b1c) - renovate[bot]
+- **(deps)** update crazy-max/ghaction-import-gpg action to v3.2.0 - (3d2186e) - renovate[bot]
+
+- - -
+
 ## v1.0.0 - 2024-08-14
 #### Build system
 - use cocogitto - (7bfe358) - Billie Thompson
