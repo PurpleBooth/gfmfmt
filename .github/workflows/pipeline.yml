@@ -88,7 +88,7 @@ jobs:
       run: echo ::set-output name=REPOSITORY_NAME::$(echo "$GITHUB_REPOSITORY" | awk
         -F / '{print $2}' | sed -e "s/:refs//")
       shell: bash
-    - uses: dlavrenuek/conventional-changelog-action@b3c3c89be84f31d993b876697f643d0266874f5d # v1.1.2
+    - uses: dlavrenuek/conventional-changelog-action@061702b2dfd0d67c9be5779c16c35fde2e6d522c # v1.2.5
       id: changelog
       with:
         from: v${{ needs.release.outputs.previous_version }}
