@@ -2,6 +2,23 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v1.0.0 - 2024-08-14
+#### Build system
+- use cocogitto - (7bfe358) - Billie Thompson
+#### Continuous Integration
+- use common pipelines markdown pipeline - (9fcef3b) - Billie Thompson
+- Update gfmfmt-action version - (29bcb8c) - Billie Thompson
+- Update "If" - (c8d321b) - Billie Thompson
+- Add renovate.json - (eae3bd5) - renovate[bot]
+#### Miscellaneous Chores
+- **(deps)** pin dependencies - (4a6cbc1) - renovate[bot]
+- **(deps)** update cuchi/jinja2-action action to v1.2.2 - (c7b5702) - renovate[bot]
+- **(deps)** update actions/checkout action to v4 - (74bd2c7) - renovate[bot]
+- **(deps)** update ncipollo/release-action action to v1.14.0 - (e13e2ac) - renovate[bot]
+- **(version)** v0.1.4 - (a6247fe) - cog-bot
+
+- - -
+
 ## v0.1.4 - 2024-08-14
 #### Bug Fixes
 - **(Homebrew)** Correct url format - (fdee6e2) - Billie Thompson
