@@ -31,55 +31,48 @@ jobs:
     - run: sudo apt-get install pandoc
     - run: make test
 
-  versio-plan:
-    env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      GITHUB_USER: ${{ github.actor }}
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v2.3.4
-      with:
-        fetch-depth: 0
-    - uses: chaaz/versio-actions/install@v1.1
-    - run: versio check
-    - run: versio plan
-    - run: versio release --dry-run
-
+  commit-checks:
+    uses: PurpleBooth/common-pipelines/.github/workflows/commit-check.yml@main
+    
   release:
     if: github.ref == 'refs/heads/main'
     needs:
     - lint
     - test
-    - versio-plan
+    - commit-checks
     - lint-markdown
-    env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      GITHUB_USER: ${{ github.actor }}
     outputs:
-      version_bump: ${{ steps.version_bump.outputs.version_bump }}
       current_version: ${{ steps.current_version.outputs.current_version }}
       previous_version: ${{ steps.previous_version.outputs.previous_version }}
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2.3.4
+    - uses: actions/checkout@main
       with:
-        token: ${{ secrets.GITHUB_TOKEN }}
         fetch-depth: 0
-    - uses: chaaz/versio-actions/install@v1.1
-      name: Install versio
+    - uses: cargo-bins/cargo-binstall@main
+      name: Install cargo binstall
+    - name: Get tags
+      run: git fetch --tags origin
+    - shell: bash
+      run: cargo binstall --no-confirm --locked cocogitto
     - id: previous_version
-      run: echo ::set-output "name=previous_version::$( versio get --id 1 -v )"
-    - run: echo ::set-output "name=BUMP::$( versio release --dry-run )"
-      id: get_versio_plan
-    - name: Generate release
-      if: ${{ contains(steps.get_versio_plan.outputs.BUMP, ' -> ') }}
-      run: versio release
-    - run: echo ::set-output "name=current_version::$( versio get --id 1 -v )"
-      id: current_version
-    - run: echo "version_bump=true" >> "$GITHUB_OUTPUT"
-      if: steps.current_version.outputs.current_version != steps.previous_version.outputs.previous_version
-      id: version_bump
+      run: |
+        cog get-version | tee .version
+        echo "previous_version=$( cat .version )"  >> "$GITHUB_OUTPUT"
+        rm .version
+      shell: bash
+    - name: Semver release
+      id: release
+      run: |
+        git config --global user.name "cog-bot"
+        git config --global user.email "cog@example.com"
+        cog bump --auto
+    - id: current_version
+      run: |
+        cog get-version | tee .version
+        echo "current_version=$( cat .version )"  >> "$GITHUB_OUTPUT"
+        rm .version
+      shell: bash
 
   upload-release:
     if: needs.release.outputs.version_bump
