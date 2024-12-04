@@ -93,7 +93,7 @@ jobs:
         from: v${{ needs.release.outputs.previous_version }}
         to: v${{ needs.release.outputs.current_version }}
     - name: Attest binaries
-      uses: actions/attest-build-provenance@ef244123eb79f2f7a7e75d99086184180e6d0018 # v1
+      uses: actions/attest-build-provenance@619dbb2e03e0189af0c55118e7d3c5e129e99726 # v2
       with:
         subject-path: gfmfmt
     - name: Sign binaries
